@@ -321,7 +321,8 @@ class KMeans private (
           if (count != 0) {
             scal(1.0 / count, sum)
             val newCenter = new VectorWithNorm(sum)
-            if (KMeans.fastSquaredDistance(newCenter, centers(run)(j)) > epsilon * epsilon) {
+            // if (KMeans.fastSquaredDistance(newCenter, centers(run)(j)) > epsilon * epsilon) {
+            if (KMeans.customDistance(newCenter, centers(run)(j)) > epsilon * epsilon) {
               changed = true
             }
             centers(run)(j) = newCenter
@@ -580,7 +581,8 @@ object KMeans {
       var lowerBoundOfSqDist = center.norm - point.norm
       lowerBoundOfSqDist = lowerBoundOfSqDist * lowerBoundOfSqDist
       if (lowerBoundOfSqDist < bestDistance) {
-        val distance: Double = fastSquaredDistance(center, point)
+        // val distance: Double = fastSquaredDistance(center, point)
+        val distance: Double = customDistance(center, point)
         if (distance < bestDistance) {
           bestDistance = distance
           bestIndex = i
@@ -607,6 +609,17 @@ object KMeans {
       v1: VectorWithNorm,
       v2: VectorWithNorm): Double = {
     MLUtils.fastSquaredDistance(v1.vector, v1.norm, v2.vector, v2.norm)
+  }
+
+  private[clustering] def customDistance(
+      v1: VectorWithNorm,
+      v2: VectorWithNorm): Double = {
+        var sum: Double = 0
+        for (i <- 0 until v1.vector.size) {
+            sum += scala.math.pow((v2.vector(i)-v1.vector(i)),2)
+        }
+        println("TATA")
+        scala.math.sqrt(sum)
   }
 
   private[spark] def validateInitMode(initMode: String): Boolean = {

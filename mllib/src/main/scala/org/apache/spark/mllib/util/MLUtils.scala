@@ -340,6 +340,7 @@ object MLUtils {
     val sumSquaredNorm = norm1 * norm1 + norm2 * norm2
     val normDiff = norm1 - norm2
     var sqDist = 0.0
+    println("TOTO")
     /*
      * The relative error is
      * <pre>
