@@ -322,7 +322,7 @@ class KMeans private (
             scal(1.0 / count, sum)
             val newCenter = new VectorWithNorm(sum)
             // if (KMeans.fastSquaredDistance(newCenter, centers(run)(j)) > epsilon * epsilon) {
-            if (KMeans.customDistance(newCenter, centers(run)(j)) > epsilon * epsilon) {
+            if (KMeans.manhattanCircularDistance(newCenter, centers(run)(j)) > epsilon * epsilon) {
               changed = true
             }
             centers(run)(j) = newCenter
@@ -582,7 +582,7 @@ object KMeans {
       lowerBoundOfSqDist = lowerBoundOfSqDist * lowerBoundOfSqDist
       if (lowerBoundOfSqDist < bestDistance) {
         // val distance: Double = fastSquaredDistance(center, point)
-        val distance: Double = customDistance(center, point)
+        val distance: Double = manhattanCircularDistance(center, point)
         if (distance < bestDistance) {
           bestDistance = distance
           bestIndex = i
@@ -618,8 +618,46 @@ object KMeans {
         for (i <- 0 until v1.vector.size) {
             sum += scala.math.pow((v2.vector(i)-v1.vector(i)),2)
         }
-        println("TATA")
         scala.math.sqrt(sum)
+  }
+
+  private[mllib] def euclideanCircularDistance(
+      v1: VectorWithNorm,
+      v2: VectorWithNorm): Double = {
+        var sum: Double = 0
+        var total = v1.vector.size
+        for (i <- 0 until (total-2)) {
+            sum += scala.math.pow((v2.vector(i)-v1.vector(i)),2)
+        }
+        for (i <- (total-2) until total) {
+            sum += scala.math.pow(circularDistance(v2.vector(i),v1.vector(i),7.0),2)
+        }
+        scala.math.sqrt(sum)
+  }
+
+  private[mllib] def manhattanCircularDistance(
+      v1: VectorWithNorm,
+      v2: VectorWithNorm): Double = {
+        var sum: Double = 0
+        var total = v1.vector.size
+        for (i <- 0 until (total-2)) {
+            sum += scala.math.abs((v2.vector(i)-v1.vector(i)))
+        }
+        for (i <- (total-2) until total) {
+            sum += scala.math.abs(circularDistance(v2.vector(i),v1.vector(i),7.0))
+        }
+        sum
+  }
+
+  private[mllib] def circularDistance(
+      v1: Double,
+      v2: Double,
+      m: Double): Double = {
+      scala.math.sqrt(
+          1-scala.math.abs(
+              1-((2/(m-1))*scala.math.abs(((v2-v1))))
+          )
+      )
   }
 
   private[spark] def validateInitMode(initMode: String): Boolean = {
