@@ -1,4 +1,12 @@
 
+import org.apache.spark.internal.Logging
+import org.apache.spark.mllib.linalg.{Vector, Vectors}
+import org.apache.spark.mllib.linalg.BLAS.{axpy, scal}
+import org.apache.spark.mllib.util.MLUtils
+import org.apache.spark.rdd.RDD
+import org.apache.spark.storage.StorageLevel
+import org.apache.spark.util.Utils
+import org.apache.spark.util.random.XORShiftRandom
 import org.apache.spark.mllib.linalg.{Vector, Vectors}
 
 
@@ -527,17 +535,17 @@ object KMeans {
     def fastSquaredDistance(
             v1: VectorWithNorm,
             v2: VectorWithNorm): Double = {
-        MLUtils.fastSquaredDistance(v1.vector, v1.norm, v2.vector, v2.norm)
+        org.apache.spark.mllib.util.MLUtils.fastSquaredDistance(v1.vector, v1.norm, v2.vector, v2.norm)
     }
 
-    def customDistance(
+    def manhattanDistance(
             v1: VectorWithNorm,
             v2: VectorWithNorm): Double = {
         var sum: Double = 0
         for (i <- 0 until v1.vector.size) {
-            sum += scala.math.pow((v2.vector(i)-v1.vector(i)),2)
+            sum += scala.math.abs(v2.vector(i)-v1.vector(i)
         }
-        scala.math.sqrt(sum)
+        sum
     }
 
     def euclideanCircularDistance(
@@ -554,6 +562,21 @@ object KMeans {
         scala.math.sqrt(sum)
     }
 
+    def euclideanDissimilarityDistance(
+            v1: VectorWithNorm,
+            v2: VectorWithNorm): Double = {
+        var sum: Double = 0.0
+        var total = v1.vector.size
+        for (i <- 0 until (total-2)) {
+            sum += scala.math.pow((v2.vector(i)-v1.vector(i)),2)
+        }
+        for (i <- (total-2) until total) {
+          var increment :Double = if ((v2.vector(i) - v1.vector(i)) >  1) 1 else 0
+            sum += increment
+        }
+        scala.math.sqrt(sum)
+    }
+
     def manhattanCircularDistance(
             v1: VectorWithNorm,
             v2: VectorWithNorm): Double = {
@@ -564,6 +587,21 @@ object KMeans {
         }
         for (i <- (total-2) until total) {
             sum += scala.math.abs(circularDistance(v2.vector(i),v1.vector(i),7.0))
+        }
+        sum
+    }
+
+    def manhattanDissimilarityDistance(
+            v1: VectorWithNorm,
+            v2: VectorWithNorm): Double = {
+        var sum: Double = 0.0
+        var total = v1.vector.size
+        for (i <- 0 until (total-2)) {
+            sum += scala.math.abs((v2.vector(i)-v1.vector(i)))
+        }
+        for (i <- (total-2) until total) {
+          var increment :Double = if ((v2.vector(i) - v1.vector(i)) >  1) 1 else 0
+            sum += increment
         }
         sum
     }
